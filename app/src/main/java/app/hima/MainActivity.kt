@@ -177,6 +177,13 @@ class MainActivity : Activity() {
     }
 
     private fun askPin(onOk: () -> Unit) {
+        val lockUntil = prefs.getLong("lockUntil", 0L)
+        val now = System.currentTimeMillis()
+        if (now < lockUntil) {
+            val secs = (lockUntil - now) / 1000 + 1
+            Toast.makeText(this, "محاولات كثيرة، انتظر $secs ثانية", Toast.LENGTH_LONG).show()
+            return
+        }
         val e = numericField("الرقم السري")
         val box = LinearLayout(this)
         box.setPadding(48, 24, 48, 0)
@@ -186,12 +193,22 @@ class MainActivity : Activity() {
             .setView(box)
             .setPositiveButton("تأكيد") { _, _ ->
                 if (checkPin(e.text.toString())) {
+                    prefs.edit().putInt("fails", 0).apply()
                     onOk()
                 } else {
-                    Toast.makeText(this, "الرقم السري غير صحيح", Toast.LENGTH_LONG).show()
+                    val fails = prefs.getInt("fails", 0) + 1
+                    prefs.edit().putInt("fails", fails).apply()
+                    if (fails >= 5) {
+                        val lockSecs = minOf(30 * (fails - 4), 300)
+                        prefs.edit().putLong("lockUntil", now + lockSecs * 1000L).apply()
+                        Toast.makeText(this, "محاولات كثيرة، انتظر $lockSecs ثانية", Toast.LENGTH_LONG).show()
+                    } else {
+                        Toast.makeText(this, "رقم سري خاطئ", Toast.LENGTH_SHORT).show()
+                    }
                 }
             }
             .setNegativeButton("إلغاء", null)
             .show()
     }
+}
 }
