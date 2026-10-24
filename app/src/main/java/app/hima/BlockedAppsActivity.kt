@@ -31,9 +31,9 @@ class BlockedAppsActivity : Activity() {
 
         val pm = packageManager
         val apps = pm.getInstalledApplications(PackageManager.GET_META_DATA)
-            .filter { pm.getLaunchIntentForPackage(it.packageName) != null }
-            .sortedBy { it.loadLabel(pm).toString().lowercase() }
-
+    .filter { pm.getLaunchIntentForPackage(it.packageName) != null }
+    .filter { it.packageName != packageName }
+    .sortedBy { it.loadLabel(pm).toString().lowercase() }
         val listLayout = LinearLayout(this)
         listLayout.orientation = LinearLayout.VERTICAL
 
