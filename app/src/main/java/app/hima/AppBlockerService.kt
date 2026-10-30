@@ -3,6 +3,8 @@ package app.hima
 import android.accessibilityservice.AccessibilityService
 import android.content.Context
 import android.content.Intent
+import android.os.Handler
+import android.os.Looper
 import android.view.accessibility.AccessibilityEvent
 
 class AppBlockerService : AccessibilityService() {
@@ -18,12 +20,14 @@ class AppBlockerService : AccessibilityService() {
 
         if (blocked.contains(pkg)) {
             performGlobalAction(GLOBAL_ACTION_HOME)
-            try {
-                val i = Intent(this, BlockedScreenActivity::class.java)
-                i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
-                startActivity(i)
-            } catch (e: Exception) {
-            }
+            Handler(Looper.getMainLooper()).postDelayed({
+                try {
+                    val i = Intent(this, BlockedScreenActivity::class.java)
+                    i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+                    startActivity(i)
+                } catch (e: Exception) {
+                }
+            }, 400)
         }
     }
 
