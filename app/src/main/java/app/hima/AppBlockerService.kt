@@ -12,6 +12,7 @@ import android.view.accessibility.AccessibilityEvent
 import android.widget.Button
 import android.widget.LinearLayout
 import android.widget.TextView
+import android.widget.Toast
 
 class AppBlockerService : AccessibilityService() {
 
@@ -74,6 +75,7 @@ class AppBlockerService : AccessibilityService() {
             overlay = root
             handler.postDelayed({ hideOverlay() }, 3000)
         } catch (e: Exception) {
+            Toast.makeText(this, "خطأ: " + e.message, Toast.LENGTH_LONG).show()
         }
     }
 
