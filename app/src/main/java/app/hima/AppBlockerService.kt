@@ -20,7 +20,7 @@ class AppBlockerService : AccessibilityService() {
 
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
         if (event == null) return
-        if (event.eventType != AccessibilityEv
+        if (event.eventType != AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED) return
                     val pkg = event.packageName?.toString() ?: return
         if (pkg == packageName) return
 
