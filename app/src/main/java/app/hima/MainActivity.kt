@@ -66,9 +66,9 @@ class MainActivity : Activity() {
         root.addView(change)
         val apps = Button(this)
             apps.text = "التطبيقات المحظورة"
-            apps.setOnClickListener {
+            apps.setOnClickListener { askPin {
                 startActivity(Intent(this, BlockedAppsActivity::class.java))
-            }
+            } } 
             root.addView(apps)
 
         setContentView(root)
