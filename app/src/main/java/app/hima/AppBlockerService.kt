@@ -30,6 +30,7 @@ class AppBlockerService : AccessibilityService() {
 
         if (blocked.contains(pkg)) {
             performGlobalAction(GLOBAL_ACTION_HOME)
+            Toast.makeText(this, "حمى: تم حظر " + pkg, Toast.LENGTH_SHORT).show()
             showOverlay()
         }
     }
