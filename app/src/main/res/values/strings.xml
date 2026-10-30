@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="accessibility_service_description">تمنح هذه الخدمة تطبيق حمى إمكانية إغلاق التطبيقات المحظورة تلقائياً</string>
+</resources>
