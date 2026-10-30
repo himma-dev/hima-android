@@ -13,6 +13,7 @@
             </intent-filter>
         </activity>
         <activity android:name=".BlockedAppsActivity" android:exported="false" />
+        <activity android:name=".SetupGuideActivity" android:exported="false" />
         <service
             android:name=".HimaVpnService"
             android:exported="false"
