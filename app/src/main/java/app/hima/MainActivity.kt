@@ -70,6 +70,12 @@ class MainActivity : Activity() {
                 startActivity(Intent(this, BlockedAppsActivity::class.java))
             } } 
             root.addView(apps)
+            val guide = Button(this)
+guide.text = "دليل التفعيل"
+guide.setOnClickListener {
+    startActivity(Intent(this, SetupGuideActivity::class.java))
+}
+root.addView(guide)
 
         setContentView(root)
     }
