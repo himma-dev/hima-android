@@ -14,6 +14,7 @@
         </activity>
         <activity android:name=".BlockedAppsActivity" android:exported="false" />
         <activity android:name=".SetupGuideActivity" android:exported="false" />
+        <activity android:name=".BlockedScreenActivity" android:exported="false" android:excludeFromRecents="true" android:launchMode="singleTask" />
         <service
             android:name=".HimaVpnService"
             android:exported="false"
