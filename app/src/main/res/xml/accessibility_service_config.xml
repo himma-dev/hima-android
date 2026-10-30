@@ -3,5 +3,5 @@
     android:accessibilityEventTypes="typeWindowStateChanged"
     android:accessibilityFeedbackType="feedbackGeneric"
     android:canRetrieveWindowContent="true"
-    android:description="تمنح هذه الخدمة تطبيق حمى إمكانية إغلاق التطبيقات المحظورة تلقائياً"
+    android:description="@string/accessibility_service_description"
     android:notificationTimeout="100" />
