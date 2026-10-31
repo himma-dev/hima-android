@@ -37,7 +37,7 @@ class AppBlockerService : AccessibilityService() {
 override fun onServiceConnected() {
     super.onServiceConnected()
     val prefs = getSharedPreferences("hima", Context.MODE_PRIVATE)
-    Toast.makeText(this, "حمى: بدأت الخدمة، مسجلة=" + prefs.getBoolean("protect_on", false) + "، تعمل=" + HimaVpnService.running + "، تحتاج موافقة=" + (android.net.VpnService.prepare(this) != null), Toast.LENGTH_LONG).show()
+    showDiag("حمى: بدأت الخدمة، مسجلة=" + prefs.getBoolean("protect_on", false) + "، تعمل=" + HimaVpnService.running + "، تحتاج موافقة=" + (android.net.VpnService.prepare(this) != null))
     if (!prefs.getBoolean("protect_on", false)) return
     if (HimaVpnService.running) return
     if (android.net.VpnService.prepare(this) != null) return
@@ -46,6 +46,34 @@ override fun onServiceConnected() {
         Toast.makeText(this, "حمى: تشغيل الحماية تلقائياً", Toast.LENGTH_LONG).show()
     } catch (e: Exception) {
         Toast.makeText(this, "حمى خطأ: " + e.message, Toast.LENGTH_LONG).show()
+    }
+}
+
+private fun showDiag(text: String) {
+    try {
+        val wm = getSystemService(Context.WINDOW_SERVICE) as WindowManager
+        val tv = TextView(this)
+        tv.text = text
+        tv.textSize = 18f
+        tv.setTextColor(Color.WHITE)
+        tv.setBackgroundColor(Color.BLACK)
+        tv.setPadding(32, 64, 32, 64)
+        val p = WindowManager.LayoutParams(
+            WindowManager.LayoutParams.MATCH_PARENT,
+            WindowManager.LayoutParams.WRAP_CONTENT,
+            WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY,
+            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE,
+            PixelFormat.TRANSLUCENT
+        )
+        p.gravity = Gravity.TOP
+        wm.addView(tv, p)
+        handler.postDelayed({
+            try {
+                wm.removeView(tv)
+            } catch (e: Exception) {
+            }
+        }, 20000)
+    } catch (e: Exception) {
     }
 }
     private fun showOverlay() {
