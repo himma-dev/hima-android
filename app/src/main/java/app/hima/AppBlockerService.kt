@@ -34,7 +34,19 @@ class AppBlockerService : AccessibilityService() {
             showOverlay()
         }
     }
-
+override fun onServiceConnected() {
+    super.onServiceConnected()
+    val prefs = getSharedPreferences("hima", Context.MODE_PRIVATE)
+    if (!prefs.getBoolean("protect_on", false)) return
+    if (HimaVpnService.running) return
+    if (android.net.VpnService.prepare(this) != null) return
+    try {
+        startService(android.content.Intent(this, HimaVpnService::class.java))
+        Toast.makeText(this, "حمى: تشغيل الحماية تلقائياً", Toast.LENGTH_LONG).show()
+    } catch (e: Exception) {
+        Toast.makeText(this, "حمى خطأ: " + e.message, Toast.LENGTH_LONG).show()
+    }
+}
     private fun showOverlay() {
         if (overlay != null) return
         try {
