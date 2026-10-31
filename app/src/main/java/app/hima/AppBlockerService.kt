@@ -22,7 +22,7 @@ class AppBlockerService : AccessibilityService() {
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
         if (event == null) return
         if (event.eventType != AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED) return
-        pendingDiag?.let { showDiag(it); pendingDiag = null }
+        
                     val pkg = event.packageName?.toString() ?: return
         if (pkg == packageName) return
 
@@ -35,21 +35,21 @@ class AppBlockerService : AccessibilityService() {
             showOverlay()
         }
     }
-    private var pendingDiag: String? = null
+    
 override fun onServiceConnected() {
     super.onServiceConnected()
-        Toast.makeText(this, "حمى: الخدمة اتصلت", Toast.LENGTH_LONG).show()
+        
     val prefs = getSharedPreferences("hima", Context.MODE_PRIVATE)
-    showDiag("حمى: بدأت الخدمة، مسجلة=" + prefs.getBoolean("protect_on", false) + "، تعمل=" + HimaVpnService.running + "، تحتاج موافقة=" + (android.net.VpnService.prepare(this) != null))
-    pendingDiag = "حمى (بعد الإقلاع): مسجلة=" + prefs.getBoolean("protect_on", false) + "، تعمل=" + HimaVpnService.running
+    
+    
     if (!prefs.getBoolean("protect_on", false)) return
     if (HimaVpnService.running) return
     if (android.net.VpnService.prepare(this) != null) return
     try {
         startService(android.content.Intent(this, HimaVpnService::class.java))
-        Toast.makeText(this, "حمى: تشغيل الحماية تلقائياً", Toast.LENGTH_LONG).show()
+        
     } catch (e: Exception) {
-        Toast.makeText(this, "حمى خطأ: " + e.message, Toast.LENGTH_LONG).show()
+        
     }
 }
 
