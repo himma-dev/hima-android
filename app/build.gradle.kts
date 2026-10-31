@@ -11,8 +11,9 @@ android {
         applicationId = "app.hima.filter"
         minSdk = 26
         targetSdk = 35
-        versionCode = 1
-        versionName = "0.1"
+                val run = (System.getenv("GITHUB_RUN_NUMBER") ?: "1").toInt()
+        versionCode = run
+        versionName = "0.1-b$run"
     }
 
     compileOptions {
