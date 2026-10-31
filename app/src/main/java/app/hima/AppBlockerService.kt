@@ -37,6 +37,7 @@ class AppBlockerService : AccessibilityService() {
 override fun onServiceConnected() {
     super.onServiceConnected()
     val prefs = getSharedPreferences("hima", Context.MODE_PRIVATE)
+    Toast.makeText(this, "حمى: بدأت الخدمة، مسجلة=" + prefs.getBoolean("protect_on", false) + "، تعمل=" + HimaVpnService.running + "، تحتاج موافقة=" + (android.net.VpnService.prepare(this) != null), Toast.LENGTH_LONG).show()
     if (!prefs.getBoolean("protect_on", false)) return
     if (HimaVpnService.running) return
     if (android.net.VpnService.prepare(this) != null) return
