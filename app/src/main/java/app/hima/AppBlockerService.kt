@@ -38,6 +38,7 @@ class AppBlockerService : AccessibilityService() {
     private var pendingDiag: String? = null
 override fun onServiceConnected() {
     super.onServiceConnected()
+        Toast.makeText(this, "حمى: الخدمة اتصلت", Toast.LENGTH_LONG).show()
     val prefs = getSharedPreferences("hima", Context.MODE_PRIVATE)
     showDiag("حمى: بدأت الخدمة، مسجلة=" + prefs.getBoolean("protect_on", false) + "، تعمل=" + HimaVpnService.running + "، تحتاج موافقة=" + (android.net.VpnService.prepare(this) != null))
     pendingDiag = "حمى (بعد الإقلاع): مسجلة=" + prefs.getBoolean("protect_on", false) + "، تعمل=" + HimaVpnService.running
@@ -77,6 +78,7 @@ private fun showDiag(text: String) {
             }
         }, 20000)
     } catch (e: Exception) {
+                Toast.makeText(this, "خطأ الشريط: " + e.message, Toast.LENGTH_LONG).show()
     }
 }
     private fun showOverlay() {
