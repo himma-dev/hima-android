@@ -26,10 +26,12 @@ class HimaVpnService : VpnService() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         if (intent?.action == ACTION_STOP) {
+            getSharedPreferences("hima", MODE_PRIVATE).edit().putBoolean("protect_on", false).apply()
             stopFilter()
             stopSelf()
             return START_NOT_STICKY
         }
+        getSharedPreferences("hima", MODE_PRIVATE).edit().putBoolean("protect_on", true).apply()
         startFilter()
         return START_STICKY
     }
