@@ -1,86 +1,148 @@
 package app.hima
 
 import android.accessibilityservice.AccessibilityService
+import android.content.BroadcastReceiver
 import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
 import android.graphics.Color
 import android.graphics.PixelFormat
+import android.net.VpnService
+import android.os.Build
 import android.os.Handler
 import android.os.Looper
+import android.os.SystemClock
 import android.view.Gravity
 import android.view.WindowManager
 import android.view.accessibility.AccessibilityEvent
 import android.widget.Button
 import android.widget.LinearLayout
 import android.widget.TextView
-import android.widget.Toast
 
 class AppBlockerService : AccessibilityService() {
 
     private var overlay: LinearLayout? = null
     private val handler = Handler(Looper.getMainLooper())
 
+    // قياس وقت الاستخدام
+    private var curPkg: String? = null
+    private var curStart: Long = 0L
+    private var lastPkg: String? = null
+    private var receiverOn = false
+
+    private val screenReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            when (intent?.action) {
+                Intent.ACTION_SCREEN_OFF -> stopCounting()
+                Intent.ACTION_USER_PRESENT -> {
+                    val p = lastPkg
+                    if (p != null) {
+                        curPkg = p
+                        curStart = SystemClock.elapsedRealtime()
+                    }
+                }
+            }
+        }
+    }
+
+    private fun stopCounting() {
+        val p = curPkg
+        if (p != null) {
+            val ms = SystemClock.elapsedRealtime() - curStart
+            // سقف ساعة واحدة لكل فترة لتفادي الأخطاء
+            UsageStore.add(this, p, minOf(ms, 3600000L))
+        }
+        curPkg = null
+    }
+
+    private fun startCounting(pkg: String) {
+        if (pkg == curPkg) return
+        stopCounting()
+        curPkg = pkg
+        lastPkg = pkg
+        curStart = SystemClock.elapsedRealtime()
+    }
+
+    private fun isLauncher(pkg: String): Boolean {
+        if (pkg.contains("launcher")) return true
+        return try {
+            val i = Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME)
+            val r = packageManager.resolveActivity(i, 0)
+            r?.activityInfo?.packageName == pkg
+        } catch (e: Exception) {
+            false
+        }
+    }
+
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
         if (event == null) return
         if (event.eventType != AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED) return
-        
-                    val pkg = event.packageName?.toString() ?: return
-        if (pkg == packageName) return
+
+        val pkg = event.packageName?.toString() ?: return
+
+        // نوافذ النظام ولوحة المفاتيح لا تغيّر التطبيق الحالي
+        if (pkg == "com.android.systemui" || pkg.contains("inputmethod")) return
+
+        if (pkg == packageName || isLauncher(pkg)) {
+            stopCounting()
+            lastPkg = null
+            return
+        }
 
         val prefs = getSharedPreferences("hima", Context.MODE_PRIVATE)
         val blocked: Set<String> = prefs.getStringSet("blocked_apps", emptySet()) ?: emptySet()
 
         if (blocked.contains(pkg)) {
+            stopCounting()
+            lastPkg = null
             performGlobalAction(GLOBAL_ACTION_HOME)
-            
             showOverlay()
+            return
         }
-    }
-    
-override fun onServiceConnected() {
-    super.onServiceConnected()
-        
-    val prefs = getSharedPreferences("hima", Context.MODE_PRIVATE)
-    
-    
-    if (!prefs.getBoolean("protect_on", false)) return
-    if (HimaVpnService.running) return
-    if (android.net.VpnService.prepare(this) != null) return
-    try {
-        startService(android.content.Intent(this, HimaVpnService::class.java))
-        
-    } catch (e: Exception) {
-        
-    }
-}
 
-private fun showDiag(text: String) {
-    try {
-        val wm = getSystemService(Context.WINDOW_SERVICE) as WindowManager
-        val tv = TextView(this)
-        tv.text = text
-        tv.textSize = 18f
-        tv.setTextColor(Color.WHITE)
-        tv.setBackgroundColor(Color.BLACK)
-        tv.setPadding(32, 64, 32, 64)
-        val p = WindowManager.LayoutParams(
-            WindowManager.LayoutParams.MATCH_PARENT,
-            WindowManager.LayoutParams.WRAP_CONTENT,
-            WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY,
-            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE,
-            PixelFormat.TRANSLUCENT
-        )
-        p.gravity = Gravity.TOP
-        wm.addView(tv, p)
-        handler.postDelayed({
+        startCounting(pkg)
+    }
+
+    override fun onServiceConnected() {
+        super.onServiceConnected()
+
+        if (!receiverOn) {
             try {
-                wm.removeView(tv)
+                val f = IntentFilter()
+                f.addAction(Intent.ACTION_SCREEN_OFF)
+                f.addAction(Intent.ACTION_USER_PRESENT)
+                if (Build.VERSION.SDK_INT >= 33) {
+                    registerReceiver(screenReceiver, f, Context.RECEIVER_NOT_EXPORTED)
+                } else {
+                    registerReceiver(screenReceiver, f)
+                }
+                receiverOn = true
             } catch (e: Exception) {
             }
-        }, 20000)
-    } catch (e: Exception) {
-                Toast.makeText(this, "خطأ الشريط: " + e.message, Toast.LENGTH_LONG).show()
+        }
+
+        val prefs = getSharedPreferences("hima", Context.MODE_PRIVATE)
+        if (!prefs.getBoolean("protect_on", false)) return
+        if (HimaVpnService.running) return
+        if (VpnService.prepare(this) != null) return
+        try {
+            startService(Intent(this, HimaVpnService::class.java))
+        } catch (e: Exception) {
+        }
     }
-}
+
+    override fun onDestroy() {
+        stopCounting()
+        if (receiverOn) {
+            try {
+                unregisterReceiver(screenReceiver)
+            } catch (e: Exception) {
+            }
+            receiverOn = false
+        }
+        super.onDestroy()
+    }
+
     private fun showOverlay() {
         if (overlay != null) return
         try {
@@ -122,7 +184,6 @@ private fun showDiag(text: String) {
             overlay = root
             handler.postDelayed({ hideOverlay() }, 3000)
         } catch (e: Exception) {
-            
         }
     }
 
@@ -137,5 +198,7 @@ private fun showDiag(text: String) {
         overlay = null
     }
 
-    override fun onInterrupt() {}
-            }
+    override fun onInterrupt() {
+        stopCounting()
+    }
+}
