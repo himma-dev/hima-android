@@ -35,4 +35,13 @@ object UsageStore {
         }
         return out
     }
+
+    fun getLimit(ctx: Context, pkg: String): Int =
+        ctx.getSharedPreferences("hima_limits", Context.MODE_PRIVATE).getInt(pkg, 0)
+
+    fun setLimit(ctx: Context, pkg: String, minutes: Int) {
+        val e = ctx.getSharedPreferences("hima_limits", Context.MODE_PRIVATE).edit()
+        if (minutes <= 0) e.remove(pkg) else e.putInt(pkg, minutes)
+        e.apply()
+    }
 }
