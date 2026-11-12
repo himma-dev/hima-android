@@ -23,6 +23,7 @@ class AppBlockerService : AccessibilityService() {
 
     private var overlay: LinearLayout? = null
     private val handler = Handler(Looper.getMainLooper())
+    private val tickHandler = Handler(Looper.getMainLooper())
 
     // قياس وقت الاستخدام
     private var curPkg: String? = null
@@ -39,6 +40,8 @@ class AppBlockerService : AccessibilityService() {
                     if (p != null) {
                         curPkg = p
                         curStart = SystemClock.elapsedRealtime()
+                        tickHandler.removeCallbacks(tick)
+                        tickHandler.postDelayed(tick, 15000L)
                     }
                 }
             }
@@ -61,6 +64,30 @@ class AppBlockerService : AccessibilityService() {
         curPkg = pkg
         lastPkg = pkg
         curStart = SystemClock.elapsedRealtime()
+        tickHandler.removeCallbacks(tick)
+        tickHandler.postDelayed(tick, 15000L)
+    }
+
+    private val tick = object : Runnable {
+        override fun run() {
+            val p = curPkg ?: return
+            if (limitReached(p)) {
+                stopCounting()
+                lastPkg = null
+                performGlobalAction(GLOBAL_ACTION_HOME)
+                showOverlay("انتهى الوقت المسموح لهذا التطبيق اليوم")
+                return
+            }
+            tickHandler.postDelayed(this, 15000L)
+        }
+    }
+
+    private fun limitReached(pkg: String): Boolean {
+        val limit = UsageStore.getLimit(this, pkg)
+        if (limit <= 0) return false
+        var used = UsageStore.todayTotals(this)[pkg] ?: 0L
+        if (curPkg == pkg) used += SystemClock.elapsedRealtime() - curStart
+        return used >= limit * 60000L
     }
 
     private fun isLauncher(pkg: String): Boolean {
@@ -89,6 +116,14 @@ class AppBlockerService : AccessibilityService() {
             return
         }
 
+        if (LockHelper.isLocked(this) && !LockHelper.allowedWhenLocked(this, pkg)) {
+            stopCounting()
+            lastPkg = null
+            performGlobalAction(GLOBAL_ACTION_HOME)
+            showOverlay("الهاتف مقفل من ولي الأمر")
+            return
+        }
+
         val prefs = getSharedPreferences("hima", Context.MODE_PRIVATE)
         val blocked: Set<String> = prefs.getStringSet("blocked_apps", emptySet()) ?: emptySet()
 
@@ -96,14 +131,21 @@ class AppBlockerService : AccessibilityService() {
             stopCounting()
             lastPkg = null
             performGlobalAction(GLOBAL_ACTION_HOME)
-            showOverlay()
+            showOverlay("هذا التطبيق محظور من قِبل ولي الأمر")
+            return
+        }
+
+        if (limitReached(pkg)) {
+            stopCounting()
+            lastPkg = null
+            performGlobalAction(GLOBAL_ACTION_HOME)
+            showOverlay("انتهى الوقت المسموح لهذا التطبيق اليوم")
             return
         }
 
         startCounting(pkg)
     }
-
-    override fun onServiceConnected() {
+        override fun onServiceConnected() {
         super.onServiceConnected()
 
         if (!receiverOn) {
@@ -133,6 +175,7 @@ class AppBlockerService : AccessibilityService() {
 
     override fun onDestroy() {
         stopCounting()
+        tickHandler.removeCallbacksAndMessages(null)
         if (receiverOn) {
             try {
                 unregisterReceiver(screenReceiver)
@@ -143,7 +186,7 @@ class AppBlockerService : AccessibilityService() {
         super.onDestroy()
     }
 
-    private fun showOverlay() {
+    private fun showOverlay(text: String) {
         if (overlay != null) return
         try {
             val wm = getSystemService(Context.WINDOW_SERVICE) as WindowManager
@@ -161,7 +204,7 @@ class AppBlockerService : AccessibilityService() {
             root.addView(icon)
 
             val msg = TextView(this)
-            msg.text = "هذا التطبيق محظور من قِبل ولي الأمر"
+            msg.text = text
             msg.textSize = 22f
             msg.setTextColor(Color.BLACK)
             msg.gravity = Gravity.CENTER
