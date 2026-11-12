@@ -57,6 +57,24 @@ class MainActivity : Activity() {
         button.textSize = 20f
         button.setOnClickListener { toggle() }
         root.addView(button)
+                val lockBtn = Button(this)
+        lockBtn.textSize = 20f
+        lockBtn.text = if (LockHelper.isLocked(this)) "🔓 فك القفل" else "🔒 قفل الآن"
+        lockBtn.setOnClickListener {
+            if (LockHelper.isLocked(this)) {
+                askPin {
+                    LockHelper.setLocked(this, false)
+                    lockBtn.text = "🔒 قفل الآن"
+                }
+            } else {
+                val doLock = {
+                    LockHelper.setLocked(this, true)
+                    lockBtn.text = "🔓 فك القفل"
+                }
+                if (hasPin()) doLock() else askSetPin { doLock() }
+            }
+        }
+        root.addView(lockBtn)
 
         val change = Button(this)
         change.text = "تغيير الرقم السري"
