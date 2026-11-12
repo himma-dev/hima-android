@@ -71,6 +71,10 @@ class BlockedAppsActivity : Activity() {
         addBtn("-30", -30)
         addBtn("+30", 30)
         addBtn("+1س", 60)
+                val testBtn = Button(this)
+        testBtn.text = "1د"
+        testBtn.setOnClickListener { cur[0] = 1; tv.text = durText(1) }
+        rowBtns.addView(testBtn)
         box.addView(rowBtns)
 
         AlertDialog.Builder(this)
