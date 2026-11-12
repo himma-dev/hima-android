@@ -28,8 +28,8 @@ object LockHelper {
     // تطبيقات يُسمح بها أثناء القفل: الاتصال والرسائل النصية وشاشة المكالمات
     fun allowedWhenLocked(ctx: Context, pkg: String): Boolean {
         if (pkg == "android" || pkg == "com.android.phone") return true
-        if (pkg.contains("incallui")
-                    if (pkg.contains("messaging") || pkg.contains("mms") || pkg.contains("dialer") || pkg.contains("contacts")) return true|| pkg.contains("telecom") || pkg.contains("emergency")) return true
+        if (pkg.contains("incallui") || pkg.contains("telecom") || pkg.contains("emergency")) return true
+        if (pkg.contains("messaging") || pkg.contains("mms") || pkg.contains("dialer") || pkg.contains("contacts")) return true
         try {
             val tm = ctx.getSystemService(Context.TELECOM_SERVICE) as TelecomManager
             if (tm.defaultDialerPackage == pkg) return true
