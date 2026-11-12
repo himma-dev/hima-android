@@ -57,7 +57,8 @@ class MainActivity : Activity() {
         button.textSize = 20f
         button.setOnClickListener { toggle() }
         root.addView(button)
-                val lockBtn = Button(this)
+
+        val lockBtn = Button(this)
         lockBtn.textSize = 20f
         lockBtn.text = if (LockHelper.isLocked(this)) "🔓 فك القفل" else "🔒 قفل الآن"
         lockBtn.setOnClickListener {
@@ -68,8 +69,7 @@ class MainActivity : Activity() {
                 }
             } else {
                 val doLock = {
-                    LockHelper.setLocked(this, true)
-                    lockBtn.text = "🔓 فك القفل"
+                    LockDialog.show(this) { lockBtn.text = "🔓 فك القفل" }
                 }
                 if (hasPin()) doLock() else askSetPin { doLock() }
             }
@@ -83,22 +83,24 @@ class MainActivity : Activity() {
         }
         root.addView(change)
         val apps = Button(this)
-            apps.text = "التطبيقات المحظورة"
-            apps.setOnClickListener { askPin {
+        apps.text = "التطبيقات المحظورة"
+        apps.setOnClickListener {
+            askPin {
                 startActivity(Intent(this, BlockedAppsActivity::class.java))
-            } } 
-            root.addView(apps)
-            val guide = Button(this)
-guide.text = "دليل التفعيل"
-guide.setOnClickListener {
-    startActivity(Intent(this, SetupGuideActivity::class.java))
-}
-root.addView(guide)
+            }
+        }
+        root.addView(apps)
+
+        val guide = Button(this)
+        guide.text = "دليل التفعيل"
+        guide.setOnClickListener {
+            startActivity(Intent(this, SetupGuideActivity::class.java))
+        }
+        root.addView(guide)
 
         setContentView(root)
     }
-
-    override fun onResume() {
+        override fun onResume() {
         super.onResume()
         tick.run()
     }
@@ -241,4 +243,3 @@ root.addView(guide)
             .show()
     }
 }
-
