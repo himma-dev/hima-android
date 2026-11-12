@@ -5,9 +5,6 @@ import android.provider.Telephony
 import android.telecom.TelecomManager
 
 object LockHelper {
-    // للتجربة فقط: القفل ينتهي تلقائياً بعد هذه المدة. اجعلها 0 لقفل بلا انتهاء
-    private const val TEST_MINUTES = 2
-
     fun isLocked(ctx: Context): Boolean {
         val p = ctx.getSharedPreferences("hima", Context.MODE_PRIVATE)
         if (!p.getBoolean("lock_on", false)) return false
@@ -19,8 +16,9 @@ object LockHelper {
         return true
     }
 
-    fun setLocked(ctx: Context, on: Boolean) {
-        val until = if (on && TEST_MINUTES > 0) System.currentTimeMillis() + TEST_MINUTES * 60000L else 0L
+    // minutes = 0 يعني: قفل حتى يفكه الأب بالرقم السري
+    fun setLocked(ctx: Context, on: Boolean, minutes: Int = 0) {
+        val until = if (on && minutes > 0) System.currentTimeMillis() + minutes * 60000L else 0L
         ctx.getSharedPreferences("hima", Context.MODE_PRIVATE)
             .edit().putBoolean("lock_on", on).putLong("lock_until", until).apply()
     }
