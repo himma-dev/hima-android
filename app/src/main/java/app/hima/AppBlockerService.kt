@@ -106,7 +106,7 @@ class AppBlockerService : AccessibilityService() {
         if (event.eventType != AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED) return
 
         val pkg = event.packageName?.toString() ?: return
-
+        if (pkg.contains("honeyboard") || pkg.contains("keyboard")) return
         // نوافذ النظام ولوحة المفاتيح لا تغيّر التطبيق الحالي
         if (pkg == "com.android.systemui" || pkg.contains("inputmethod")) return
 
