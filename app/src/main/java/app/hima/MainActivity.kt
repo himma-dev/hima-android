@@ -100,7 +100,8 @@ class MainActivity : Activity() {
 
         setContentView(root)
     }
-        override fun onResume() {
+
+    override fun onResume() {
         super.onResume()
         tick.run()
     }
@@ -199,7 +200,7 @@ class MainActivity : Activity() {
                 if (p.length >= 4 && p == b.text.toString()) {
                     savePin(p)
                     Toast.makeText(this, "تم حفظ الرقم السري", Toast.LENGTH_SHORT).show()
-                    onDone()
+                    Recovery.showNew(this, onDone)
                 } else {
                     Toast.makeText(this, "الرقمان غير متطابقين أو أقل من 4 أرقام", Toast.LENGTH_LONG).show()
                 }
@@ -221,7 +222,7 @@ class MainActivity : Activity() {
         box.setPadding(48, 24, 48, 0)
         box.addView(e)
         AlertDialog.Builder(this)
-            .setTitle("أدخل الرقم السري للأب")
+            .setTitle("أدخل الرقم السري للأب").setNeutralButton("نسيت الرقم؟") { _, _ -> Recovery.ask(this) { askSetPin { } } }
             .setView(box)
             .setPositiveButton("تأكيد") { _, _ ->
                 if (checkPin(e.text.toString())) {
