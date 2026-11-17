@@ -101,14 +101,50 @@ class AppBlockerService : AccessibilityService() {
         }
     }
 
+    private val guardedPkgs = setOf(
+        "com.android.settings",
+        "com.google.android.packageinstaller",
+        "com.android.packageinstaller",
+        "com.samsung.android.packageinstaller",
+        "com.google.android.permissioncontroller",
+        "com.android.permissioncontroller",
+        "com.samsung.android.permissioncontroller"
+    )
+
+    private fun guardSettings(pkg: String): Boolean {
+        if (!guardedPkgs.contains(pkg)) return false
+        val prefs = getSharedPreferences("hima", Context.MODE_PRIVATE)
+        if (System.currentTimeMillis() < prefs.getLong("settings_open_until", 0L)) return false
+        val root = rootInActiveWindow ?: return false
+        val hit = try {
+            root.findAccessibilityNodeInfosByText("حمى").isNotEmpty() ||
+                root.findAccessibilityNodeInfosByText("Hima").isNotEmpty()
+        } catch (e: Exception) {
+            false
+        }
+        if (!hit) return false
+        stopCounting()
+        lastPkg = null
+        performGlobalAction(GLOBAL_ACTION_HOME)
+        showOverlay("هذه الصفحة محمية من ولي الأمر")
+        return true
+    }
+
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
         if (event == null) return
-        if (event.eventType != AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED) return
+        val type = event.eventType
+        if (type != AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED &&
+            type != AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED
+        ) return
 
         val pkg = event.packageName?.toString() ?: return
         if (pkg.contains("honeyboard") || pkg.contains("keyboard")) return
         // نوافذ النظام ولوحة المفاتيح لا تغيّر التطبيق الحالي
         if (pkg == "com.android.systemui" || pkg.contains("inputmethod")) return
+
+        // حماية صفحات الإعدادات الخاصة بالتطبيق
+        if (guardSettings(pkg)) return
+        if (type != AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED) return
 
         if (pkg == packageName || isLauncher(pkg)) {
             stopCounting()
@@ -147,6 +183,13 @@ class AppBlockerService : AccessibilityService() {
     }
         override fun onServiceConnected() {
         super.onServiceConnected()
+
+        // مهلة قصيرة بعد التفعيل حتى لا تُغلق صفحة الإعدادات أثناء الإعداد
+        val gp = getSharedPreferences("hima", Context.MODE_PRIVATE)
+        val grace = System.currentTimeMillis() + 120000L
+        if (gp.getLong("settings_open_until", 0L) < grace) {
+            gp.edit().putLong("settings_open_until", grace).apply()
+        }
 
         if (!receiverOn) {
             try {

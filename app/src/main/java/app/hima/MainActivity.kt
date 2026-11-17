@@ -76,6 +76,16 @@ class MainActivity : Activity() {
         }
         root.addView(lockBtn)
 
+        val guardBtn = Button(this)
+        guardBtn.text = "🛡️ فتح الإعدادات 10 دقائق"
+        guardBtn.setOnClickListener {
+            askPin {
+                prefs.edit().putLong("settings_open_until", System.currentTimeMillis() + 600000L).apply()
+                Toast.makeText(this, "الإعدادات مفتوحة 10 دقائق", Toast.LENGTH_LONG).show()
+            }
+        }
+        root.addView(guardBtn)
+
         val change = Button(this)
         change.text = "تغيير الرقم السري"
         change.setOnClickListener {
